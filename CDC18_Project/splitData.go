@@ -10,7 +10,7 @@ import (
 
 func main() {
 
-	fileToBeChunked := "./original_data.txt"
+	fileToBeChunked := "./realhuman_phill.txt"
 
 	file, err := os.Open(fileToBeChunked)
 
@@ -25,7 +25,7 @@ func main() {
 
 	var fileSize int64 = fileInfo.Size()
 
-	const fileChunk = 100 * (1 << 20) // 1 MB, change this to your requirement
+	const fileChunk = 98 * (1 << 20) // 100 MB, change this to your requirement
 
 	// calculate total number of parts the file will be chunked into
 
@@ -41,7 +41,7 @@ func main() {
 		file.Read(partBuffer)
 
 		// write to disk
-		fileName := "chunk_" + strconv.FormatUint(i, 10) + ".txt"
+		fileName := "" + strconv.FormatUint(i, 10) + ".txt"
 		_, err := os.Create(fileName)
 
 		if err != nil {
