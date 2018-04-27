@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"time"
 	//"os"
 )
 
@@ -53,9 +54,27 @@ func main() {
 		slaveData[index] = append(slaveData[index], slave{ip: conn.RemoteAddr().String()})
 		fmt.Println(slaveData[index])
 
+		conn.Write([]byte("test"))
+
+		conn.Write([]byte("def"))
+
+		time.Sleep(2)
+		counter := 0
+		for {
+			if counter == 5 {
+				conn.Write([]byte("def"))
+				counter = 0
+			} else {
+				counter = counter + 1
+			}
+
+			//			recvdMessage := make([]byte, 30)
+			//			n, err := conn.Read(recvdMessage)
+			//			if err != nil {
+			//				fmt.Println(n)
+			//			}
+
+		}
 	}
 
-}
-func BytesToString(data []byte) string {
-	return string(data[:])
 }
