@@ -76,15 +76,22 @@ func connectToServer(msgchan chan string) {
 			}
 			time.Sleep(2)
 
-			fileIndex := make([]byte, 30)
-			n, err := conn.Read(fileIndex)
+			data := make([]byte, 30)
+			n, err := conn.Read(data)
 			if err != nil {
-				fmt.Println("Error while receiving file index")
+				fmt.Println("Error while receiving file index and data")
 			}
-			fileToSearch := string(fileIndex[:n])
-			fmt.Println("File Number Received = ", fileToSearch)
+			fileData := string(data[:n])
+
+			file_data := strings.Split(fileData, ":")
+
+			fileIndex := file_data[0]
+			dataToSearch := file_data[1]
+
+			fmt.Println("File:Data = ", file_data)
+
 			go receiveMessage(conn, msgchan)
-			search(conn, msgchan, fileToSearch)
+			search(conn, msgchan, fileIndex, dataToSearch)
 		}
 	}
 }
@@ -118,14 +125,15 @@ func getData(fileToSearch string) []string {
 	return data
 }
 
-func search(conn net.Conn, msgchan chan string, fileToSearch string) {
+func search(conn net.Conn, msgchan chan string, fileToSearch string, dataToSearch string) {
 	fileToSearch = fileToSearch + ".txt"
 	data := getData(fileToSearch)
 
-	msg := <-msgchan
-	rcvmsg := msg
+	var rcvmsg string
+	//	msg := <-msgchan
+	//	rcvmsg := msg
 	counter := 0
-
+	msg := dataToSearch
 	fmt.Println("Text to Search = ", msg)
 	time.Sleep(1)
 	for i := 0; i < len(data); i++ {
