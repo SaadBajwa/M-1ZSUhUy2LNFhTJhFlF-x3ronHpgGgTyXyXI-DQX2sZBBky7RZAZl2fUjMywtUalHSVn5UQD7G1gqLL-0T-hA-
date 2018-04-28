@@ -136,6 +136,14 @@ func search(conn net.Conn, msgchan chan string, fileToSearch string, dataToSearc
 	msg := dataToSearch
 	fmt.Println("Text to Search = ", msg)
 	time.Sleep(1)
+
+	fmt.Println()
+	fmt.Println()
+	fmt.Println("Searching...")
+	fmt.Println()
+
+	isFound := 0
+
 	for i := 0; i < len(data); i++ {
 		if counter == 5 {
 			msg1 := <-msgchan
@@ -150,11 +158,16 @@ func search(conn net.Conn, msgchan chan string, fileToSearch string, dataToSearc
 		} else if data[i] == msg {
 			fmt.Println("Found")
 			conn.Write([]byte("found"))
+			isFound = 1
 			break
 		} else if rcvmsg == "002" {
 			conn.Write([]byte("alive"))
 		}
 		counter = counter + 1
+	}
+	if isFound == 0 {
+		fmt.Println("Not Found")
+		conn.Write([]byte("not found"))
 	}
 }
 
