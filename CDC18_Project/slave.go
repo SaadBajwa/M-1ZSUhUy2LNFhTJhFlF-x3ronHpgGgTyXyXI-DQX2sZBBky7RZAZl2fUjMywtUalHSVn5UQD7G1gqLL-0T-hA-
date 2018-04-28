@@ -62,7 +62,12 @@ func connectToServer(msgchan chan string) {
 		conn.Write([]byte(files_index))
 
 		cond := 1
+		count := 1
+		var data []string
+
 		for cond == 1 {
+			fmt.Println("Waiting for HeartBeat")
+
 			heartBeat := make([]byte, 3)
 			n1, err1 := conn.Read(heartBeat)
 			heartMsg := string(heartBeat[:n1])
@@ -76,12 +81,12 @@ func connectToServer(msgchan chan string) {
 			}
 			time.Sleep(2)
 
-			data := make([]byte, 30)
-			n, err := conn.Read(data)
+			data1 := make([]byte, 30)
+			n, err := conn.Read(data1)
 			if err != nil {
 				fmt.Println("Error while receiving file index and data")
 			}
-			fileData := string(data[:n])
+			fileData := string(data1[:n])
 
 			file_data := strings.Split(fileData, ":")
 
@@ -89,9 +94,15 @@ func connectToServer(msgchan chan string) {
 			dataToSearch := file_data[1]
 
 			fmt.Println("File:Data = ", file_data)
-
-			go receiveMessage(conn, msgchan)
-			search(conn, msgchan, fileIndex, dataToSearch)
+			var fileToSearch string
+			if count == 1 {
+				fileToSearch = fileIndex + ".txt"
+				data = getData(fileToSearch)
+				go receiveMessage(conn, msgchan)
+				count = count + 1
+			}
+			search(conn, msgchan, fileIndex, dataToSearch, data)
+			//			time.Sleep(2)
 		}
 	}
 }
@@ -122,12 +133,14 @@ func getData(fileToSearch string) []string {
 
 		data = append(data, line)
 	}
+	fmt.Println("Data has been loaded!!!")
 	return data
 }
 
-func search(conn net.Conn, msgchan chan string, fileToSearch string, dataToSearch string) {
-	fileToSearch = fileToSearch + ".txt"
-	data := getData(fileToSearch)
+func search(conn net.Conn, msgchan chan string, fileToSearch string, dataToSearch string, data []string) {
+	//	fileToSearch = fileToSearch + ".txt"
+
+	//	data := getData(fileToSearch)
 
 	var rcvmsg string
 	//	msg := <-msgchan
@@ -149,8 +162,6 @@ func search(conn net.Conn, msgchan chan string, fileToSearch string, dataToSearc
 			msg1 := <-msgchan
 			rcvmsg = msg1
 			counter = 0
-			fmt.Println("Message = ", rcvmsg)
-			fmt.Println()
 		}
 		if rcvmsg == "001" {
 			fmt.Println("Abort")
