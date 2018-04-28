@@ -30,7 +30,7 @@ func getFiles(ext string) []string {
 	return files
 }
 
-func connectToServer(msgchan chan string) {
+func connectToServer(s *string) {
 	fmt.Println("Connecting to server:")
 
 	conn, err := net.Dial("tcp", "127.0.0.1:3000")
@@ -48,9 +48,6 @@ func connectToServer(msgchan chan string) {
 		for i := 0; i < len(files)-1; i++ {
 
 			file_index := strings.Split(files[i], ".")
-
-			//files_index = append(files_index, file_index[0])
-			//files_index = append(files_index, ":")
 
 			var buf bytes.Buffer
 			buf.WriteString(files_index)
@@ -79,7 +76,6 @@ func connectToServer(msgchan chan string) {
 					conn.Write([]byte("alive"))
 				}
 			}
-			time.Sleep(2)
 
 			data1 := make([]byte, 30)
 			n, err := conn.Read(data1)
@@ -95,19 +91,20 @@ func connectToServer(msgchan chan string) {
 
 			fmt.Println("File:Data = ", file_data)
 			var fileToSearch string
-			if count == 1 {
-				fileToSearch = fileIndex + ".txt"
-				data = getData(fileToSearch)
-				go receiveMessage(conn, msgchan)
-				count = count + 1
-			}
-			search(conn, msgchan, fileIndex, dataToSearch, data)
+			//			if count == 1 {
+			fileToSearch = fileIndex + ".txt"
+			//data = getData(fileToSearch)
+			count = count + 1
+			//			}
+			go receiveMessage(conn, s)
+			getData(conn, fileToSearch, dataToSearch, data, s)
+			//search(conn, msgchan, fileIndex, dataToSearch, data)
 			//			time.Sleep(2)
 		}
 	}
 }
 
-func receiveMessage(conn net.Conn, msgchan chan string) {
+func receiveMessage(conn net.Conn, s *string) {
 
 	cond := 1
 	for cond == 1 {
@@ -116,25 +113,55 @@ func receiveMessage(conn net.Conn, msgchan chan string) {
 		if err != nil {
 		}
 		msg := string(recvdMessage[:n])
-		msgchan <- msg
-		//		go search(conn, msgchan)
+		//		msgchan <- msg
+		*s = msg
 	}
 }
 
-func getData(fileToSearch string) []string {
+func getData(conn net.Conn, fileToSearch string, dataToSearch string, data []string, s *string) { // []string {
+
 	file := "./" + fileToSearch
-	var data []string
+	//var data []string
 	fmt.Println("get Data")
 	f, _ := os.Open(file)
+	i := 0
+	var rcvmsg string
+
+	msg := dataToSearch
+	fmt.Println("Text to Search = ", msg)
+
+	isFound := 0
+
+	fmt.Println()
+	fmt.Println()
+	fmt.Println("Searching...")
+	fmt.Println()
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		line := scanner.Text()
+		i += 1
+		rcvmsg = *s
 
-		data = append(data, line)
+		fmt.Println(i)
+		if rcvmsg == "001" {
+			fmt.Println("Abort")
+			break
+		} else if line == msg {
+			fmt.Println("Found")
+			conn.Write([]byte("found"))
+			isFound = 1
+			break
+		} else if rcvmsg == "002" {
+			conn.Write([]byte("alive"))
+		}
+		rcvmsg = ""
 	}
-	fmt.Println("Data has been loaded!!!")
-	return data
+	if isFound == 0 {
+		fmt.Println("Not Found")
+		conn.Write([]byte("not found"))
+	}
+	fmt.Println("Data has been found!!!")
 }
 
 func search(conn net.Conn, msgchan chan string, fileToSearch string, dataToSearch string, data []string) {
@@ -183,8 +210,8 @@ func search(conn net.Conn, msgchan chan string, fileToSearch string, dataToSearc
 }
 
 func main() {
-	msgchan := make(chan string, 30)
-	go connectToServer(msgchan)
+	s := ""
+	go connectToServer(&s)
 	cond := 1
 	for cond == 1 {
 	}
