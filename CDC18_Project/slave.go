@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"time"
 )
 
 func getFiles(ext string) []string {
@@ -96,10 +95,9 @@ func connectToServer(s *string) {
 			//data = getData(fileToSearch)
 			count = count + 1
 			//			}
-			go receiveMessage(conn, s)
-			getData(conn, fileToSearch, dataToSearch, data, s)
-			//search(conn, msgchan, fileIndex, dataToSearch, data)
-			//			time.Sleep(2)
+			//var data []string
+			//go receiveMessage(conn, s)
+			search(conn, fileToSearch, dataToSearch, data, s)
 		}
 	}
 }
@@ -118,13 +116,16 @@ func receiveMessage(conn net.Conn, s *string) {
 	}
 }
 
-func getData(conn net.Conn, fileToSearch string, dataToSearch string, data []string, s *string) { // []string {
+func search(conn net.Conn, fileToSearch string, dataToSearch string, data []string, s *string) { // []string {
 
 	file := "./" + fileToSearch
 	//var data []string
 	fmt.Println("get Data")
+
 	f, _ := os.Open(file)
+	defer f.Close()
 	i := 0
+
 	var rcvmsg string
 
 	msg := dataToSearch
@@ -141,15 +142,14 @@ func getData(conn net.Conn, fileToSearch string, dataToSearch string, data []str
 	for scanner.Scan() {
 		line := scanner.Text()
 		i += 1
+		fmt.Println(i)
 		rcvmsg = *s
-
 		fmt.Println(i)
 		if rcvmsg == "001" {
 			fmt.Println("Abort")
 			break
 		} else if line == msg {
 			fmt.Println("Found")
-			conn.Write([]byte("found"))
 			isFound = 1
 			break
 		} else if rcvmsg == "002" {
@@ -160,58 +160,15 @@ func getData(conn net.Conn, fileToSearch string, dataToSearch string, data []str
 	if isFound == 0 {
 		fmt.Println("Not Found")
 		conn.Write([]byte("not found"))
+	} else {
+		conn.Write([]byte("found"))
 	}
 	fmt.Println("Data has been found!!!")
 }
 
-func search(conn net.Conn, msgchan chan string, fileToSearch string, dataToSearch string, data []string) {
-	//	fileToSearch = fileToSearch + ".txt"
-
-	//	data := getData(fileToSearch)
-
-	var rcvmsg string
-	//	msg := <-msgchan
-	//	rcvmsg := msg
-	counter := 0
-	msg := dataToSearch
-	fmt.Println("Text to Search = ", msg)
-	time.Sleep(1)
-
-	fmt.Println()
-	fmt.Println()
-	fmt.Println("Searching...")
-	fmt.Println()
-
-	isFound := 0
-
-	for i := 0; i < len(data); i++ {
-		if counter == 5 {
-			msg1 := <-msgchan
-			rcvmsg = msg1
-			counter = 0
-		}
-		if rcvmsg == "001" {
-			fmt.Println("Abort")
-			break
-		} else if data[i] == msg {
-			fmt.Println("Found")
-			conn.Write([]byte("found"))
-			isFound = 1
-			break
-		} else if rcvmsg == "002" {
-			conn.Write([]byte("alive"))
-		}
-		counter = counter + 1
-	}
-	if isFound == 0 {
-		fmt.Println("Not Found")
-		conn.Write([]byte("not found"))
-	}
-}
-
 func main() {
 	s := ""
-	go connectToServer(&s)
+	connectToServer(&s)
 	cond := 1
 	for cond == 1 {
 	}
