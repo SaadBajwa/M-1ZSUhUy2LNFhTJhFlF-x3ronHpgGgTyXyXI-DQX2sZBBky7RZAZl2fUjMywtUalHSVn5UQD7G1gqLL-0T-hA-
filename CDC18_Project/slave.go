@@ -61,15 +61,31 @@ func connectToServer(msgchan chan string) {
 		fmt.Println(files_index)
 		conn.Write([]byte(files_index))
 
-		fileIndex := make([]byte, 30)
-		n, err := conn.Read(fileIndex)
-		if err != nil {
-			fmt.Println("Error while receiving file index")
+		cond := 1
+		for cond == 1 {
+			heartBeat := make([]byte, 3)
+			n1, err1 := conn.Read(heartBeat)
+			heartMsg := string(heartBeat[:n1])
+			if err1 != nil {
+				fmt.Println("Error while receiving Heart Beat Message")
+			} else {
+				if heartMsg == "002" {
+					fmt.Println("Heart Beat Recv", heartMsg)
+					conn.Write([]byte("alive"))
+				}
+			}
+			time.Sleep(2)
+
+			fileIndex := make([]byte, 30)
+			n, err := conn.Read(fileIndex)
+			if err != nil {
+				fmt.Println("Error while receiving file index")
+			}
+			fileToSearch := string(fileIndex[:n])
+			fmt.Println("File Number Received = ", fileToSearch)
+			go receiveMessage(conn, msgchan)
+			search(conn, msgchan, fileToSearch)
 		}
-		fileToSearch := string(fileIndex[:n])
-		fmt.Println("File Number Received = ", fileToSearch)
-		go receiveMessage(conn, msgchan)
-		go search(conn, msgchan, fileToSearch)
 	}
 }
 
